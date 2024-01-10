@@ -75,9 +75,9 @@ class Camera:
         # Releasing the resource
         self.cam.StopGrabbing()
 
-    def show(self, image):
+    def show(self, frame):
         cv2.namedWindow("title", cv2.WINDOW_NORMAL)
-        cv2.imshow("title", img)
+        cv2.imshow("title", frame)
         key = cv2.waitKey(1) & 0xFF
 
         if key == ord("q"):
