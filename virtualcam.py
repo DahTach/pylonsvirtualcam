@@ -76,7 +76,6 @@ class Camera:
         self.cam.StopGrabbing()
 
     def show(self, image):
-        img = image.GetArray()
         cv2.namedWindow("title", cv2.WINDOW_NORMAL)
         cv2.imshow("title", img)
         key = cv2.waitKey(1) & 0xFF
