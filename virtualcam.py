@@ -10,7 +10,7 @@ from pyvirtualcam import register_backend
 
 parser = argparse.ArgumentParser(description="Charta Scan")
 parser.add_argument(
-    "--show", default=False, action="store_true", help="show cv2 window preview"
+    "--debug", default=False, action="store_true", help="show cv2 window preview"
 )
 parser.add_argument(
     "--backend",
@@ -54,19 +54,14 @@ class Camera:
         self.cam.StartGrabbing(pylon.GrabStrategy_LatestImageOnly)
 
     def setColorSpace(self):
-        if config.show:
+        if config.debug:
             return "BGR8"
         if config.vcam:
             return "RGB8"
 
     def setConverter(self):
-        if config.show:
-            # converting to opencv bgr format
-            self.converter.OutputPixelFormat = pylon.PixelType_BGR8packed
-            self.converter.OutputBitAlignment = pylon.OutputBitAlignment_MsbAligned
-        if config.vcam:
-            self.converter.OutputPixelFormat = pylon.PixelType_RGB8packed
-            self.converter.OutputBitAlignment = pylon.OutputBitAlignment_MsbAligned
+        self.converter.OutputPixelFormat = pylon.PixelType_RGB8packed
+        self.converter.OutputBitAlignment = pylon.OutputBitAlignment_MsbAligned
 
     def stream(self):
         while self.cam.IsGrabbing():
@@ -98,14 +93,8 @@ class Camera:
         frame = frame.GetArray()
         self.vcam.send(frame)
         self.vcam.sleep_until_next_frame()
-        if config.show:
-            cv2.imshow("title", frame)
-            key = cv2.waitKey(1) & 0xFF
-
-            if key == ord("q"):
-                cv2.destroyAllWindows()
-                exit(0)
-
+        if config.debug:
+            self.show(frame):
 
 def main():
     cam = Camera()
