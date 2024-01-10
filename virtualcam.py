@@ -28,7 +28,9 @@ class Camera:
         self.converter = pylon.ImageFormatConverter()
         self.height = self.cam.Height.Max
         self.width = self.cam.Width.Max
-        self.vcam = pyvirtualcam.Camera(width=self.width, height=self.height, fps=10)
+        self.vcam = pyvirtualcam.Camera(
+            width=self.width, height=self.height, fps=10, device=f"/dev/{config.device}"
+        )
 
     def startGrabbing(self):
         self.cam.StartGrabbing(pylon.GrabStrategy_LatestImageOnly)
@@ -75,12 +77,21 @@ class Camera:
 
         if key == ord("q"):
             cv2.destroyAllWindows()
+            exit(0)
 
     def streamFake(self, frame):
         print(f"Using virtual camera: {self.vcam.device}")
         frame = frame.GetArray()
         self.vcam.send(frame)
         self.vcam.sleep_until_next_frame()
+        cv2.namedWindow("title", cv2.WINDOW_NORMAL)
+        cv2.imshow("title", frame)
+        key = cv2.waitKey(1) & 0xFF
+
+        if key == ord("q"):
+            cv2.destroyAllWindows()
+            self.vcam.close()
+            exit(0)
 
 
 def main():
