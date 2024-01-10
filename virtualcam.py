@@ -54,10 +54,7 @@ class Camera:
         self.cam.StartGrabbing(pylon.GrabStrategy_LatestImageOnly)
 
     def setColorSpace(self):
-        if config.debug:
-            return "BGR8"
-        if config.vcam:
-            return "RGB8"
+        return "RGB8"
 
     def setConverter(self):
         self.converter.OutputPixelFormat = pylon.PixelType_RGB8packed
@@ -94,7 +91,8 @@ class Camera:
         self.vcam.send(frame)
         self.vcam.sleep_until_next_frame()
         if config.debug:
-            self.show(frame):
+            self.show(frame)
+
 
 def main():
     cam = Camera()
