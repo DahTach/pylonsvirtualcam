@@ -26,6 +26,9 @@ class Camera:
         self.cam.Open()
         self.cam.PixelFormat.Value = self.setColorSpace()
         self.converter = pylon.ImageFormatConverter()
+        self.height = self.cam.Height.Max
+        self.width = self.cam.Width.Max
+        self.vcam = pyvirtualcam.Camera(width=self.width, height=self.height, fps=10)
 
     def startGrabbing(self):
         self.cam.StartGrabbing(pylon.GrabStrategy_LatestImageOnly)
@@ -68,20 +71,16 @@ class Camera:
         img = image.GetArray()
         cv2.namedWindow("title", cv2.WINDOW_NORMAL)
         cv2.imshow("title", img)
-        k = cv2.waitKey(1)
-        if k == 27:
+        key = cv2.waitKey(1) & 0xFF
+
+        if key == ord("q"):
             cv2.destroyAllWindows()
 
     def streamFake(self, frame):
-        with pyvirtualcam.Camera(width=1920, height=1080, fps=20) as vcam:
-            print(f"Using virtual camera: {vcam.device}")
-            frame = np.zeros((vcam.height, vcam.width, 3), np.uint8)  # RGB
-            while True:
-                # h, s, v = (vcam.frames_sent % 100) / 100, 1.0, 1.0
-                # r, g, b = colorsys.hsv_to_rgb(h, s, v)
-                # frame[:] = (r * 255, g * 255, b * 255)
-                vcam.send(frame)
-                vcam.sleep_until_next_frame()
+        print(f"Using virtual camera: {self.vcam.device}")
+        frame = frame.GetArray()
+        self.vcam.send(frame)
+        self.vcam.sleep_until_next_frame()
 
 
 def main():
