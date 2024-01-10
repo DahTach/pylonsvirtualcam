@@ -24,12 +24,6 @@ parser.add_argument(
     default="/dev/video21",
     help="choose system related backend device",
 )
-parser.add_argument(
-    "--vcam",
-    default=False,
-    action="store_true",
-    help="stream to OBS virtual camera",
-)
 config = parser.parse_args()
 
 
@@ -105,13 +99,12 @@ class Camera:
         self.vcam.send(frame)
         self.vcam.sleep_until_next_frame()
         if config.show:
-            cv2.namedWindow("title", cv2.WINDOW_NORMAL)
             cv2.imshow("title", frame)
             key = cv2.waitKey(1) & 0xFF
 
-        if key == ord("q"):
-            cv2.destroyAllWindows()
-            exit(0)
+            if key == ord("q"):
+                cv2.destroyAllWindows()
+                exit(0)
 
 
 def main():
