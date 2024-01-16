@@ -12,3 +12,10 @@ pip install -r requirements.txt
 ```
 sudo modprobe v4l2loopback devices=1 video_nr=21 card_label="VirtualWebCam"
 ```
+
+
+# libgphoto2 VirtualWebCam
+## 1. Install gphoto2 and libgphoto2
+```
+pip install gphoto2
+```
