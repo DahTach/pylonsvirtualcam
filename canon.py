@@ -1,7 +1,9 @@
 import argparse
 import cv2
 import atexit
-import pyvirtualcam
+import sys
+
+# import pyvirtualcam
 import numpy as np
 import io
 import gphoto2 as gp
@@ -28,31 +30,43 @@ config = parser.parse_args()
 log.basicConfig(format="%(levelname)s: %(name)s: %(message)s", level=log.WARNING)
 
 
+callback_obj = gp.check_result(gp.use_python_logging())
+camera = gp.check_result(gp.gp_camera_new())
+gp.check_result(gp.gp_camera_init(camera))
+# required configuration will depend on camera type!
+print("Checking camera config")
+# get configuration tree
+config = gp.check_result(gp.gp_camera_get_config(camera))
+
+
 class Camera:
-    def __init__(self):
-        self.device = gp.Camera()
-        self.cam = self.device.init()
-        self.config = self.get_config
-        self.vcam = pyvirtualcam.Camera(
-            width=self.config.width,
-            height=self.config.height,
-            fps=10,
-            device=config.device,
-            backend=config.backend,
-        )
+    def __init__(self, camera, config):
+        self.cam = camera
+        self.config = config
+        # self.vcam = pyvirtualcam.Camera(
+        #     width=self.config.width,
+        #     height=self.config.height,
+        #     fps=10,
+        #     device=config.device,
+        #     backend=config.backend,
+        # )
         self.atexit = atexit.register(self._exit_handler)
 
     def _exit_handler(self):
-        print(f"Closing vcam {self.vcam}")
-        self.vcam.close()
-        self.cam.exit()
+        # print(f"Closing vcam {self.vcam}")
+        # self.vcam.close()
+        # self.cam.exit()
+        pass
 
-    def init_camera(self):
+    def init(self):
         try:
-            camera = self.device.init()
-            return camera
+            # self.device = gp.Camera()
+            # self.device = gp.gp_camera_new()
+            self.cam = gp.gp_camera_init(self.device)
         except Exception:
-            raise Exception(f"Could not initialize device {self.device}:\n{Exception}")
+            raise Exception(
+                f"Could not initialize device {self.device} as camera {self.cam}:\n{Exception}"
+            )
 
     def get_config(self):
         try:
@@ -70,8 +84,7 @@ class Camera:
             print(data[:10].tolist())
             stream = io.BytesIO(filedata)
             frame = cv2.imdecode(np.frombuffer(stream.read(), np.uint8), 1)
-            if config.show:
-                self.show(frame)
+            self.show(frame)
             return frame
         self.cam.exit()
 
@@ -86,6 +99,8 @@ class Camera:
         while key != ord("q"):
             cv2.imshow(f"Streaming {self.cam}", frame)
             key = cv2.waitKey(0) & 0xFF
+            if key == ord('c')
+                self.stream_capture()
         cv2.destroyAllWindows()
 
     def capture(self):
@@ -99,11 +114,25 @@ class Camera:
         self.show(image)
         return image
 
+    def stream_capture(self):
+        while True:
+            img_path = self.cam.capture(gp.GP_CAPTURE_IMAGE)
+            img_file = self.cam.file_get(
+                img_path.folder, img_path.name, gp.GP_FILE_TYPE_NORMAL
+            )
+            filedata = img_file.get_data_and_size()
+            data = memoryview(filedata)
+            print(type(data), len(data))
+            print(data[:10].tolist())
+            stream = io.BytesIO(filedata)
+            frame = cv2.imdecode(np.frombuffer(stream.read(), np.uint8), 1)
+            self.show(frame)
+
 
 def main():
-    cam = Camera()
+    cam = Camera(camera, config)
     cam.stream()
 
 
 if __name__ == "__main__":
-    main()
+    sys.exit(main())
