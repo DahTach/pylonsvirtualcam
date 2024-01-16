@@ -55,8 +55,7 @@ class Camera:
     def _exit_handler(self):
         # print(f"Closing vcam {self.vcam}")
         # self.vcam.close()
-        # self.cam.exit()
-        pass
+         self.cam.exit()
 
     def init(self):
         try:
@@ -76,17 +75,11 @@ class Camera:
             log.warning(f"Could not get config of camera {self.cam}:\n{Exception}")
 
     def stream(self):
-        while True:
-            preview = self.cam.capture_preview()
-            filedata = preview.get_data_and_size()
-            data = memoryview(filedata)
-            print(type(data), len(data))
-            print(data[:10].tolist())
-            stream = io.BytesIO(filedata)
-            frame = cv2.imdecode(np.frombuffer(stream.read(), np.uint8), 1)
-            self.show(frame)
-            return frame
-        self.cam.exit()
+        preview = self.cam.capture_preview()
+        filedata = preview.get_data_and_size()
+        data = memoryview(filedata)
+        stream = io.BytesIO(filedata)
+        return stream
 
     def streamFake(self, frame):
         print(f"Using virtual camera: {self.vcam.device}")
@@ -94,44 +87,48 @@ class Camera:
         self.vcam.send(frame)
         self.vcam.sleep_until_next_frame()
 
-    def show(self, frame):
-        key = 0
-        while key != ord("q"):
-            cv2.imshow(f"Streaming {self.cam}", frame)
-            key = cv2.waitKey(0) & 0xFF
-            if key == ord('c')
-                self.stream_capture()
-        cv2.destroyAllWindows()
+    def show_stream(self, stream):
+        frame = cv2.imdecode(np.frombuffer(stream.read(), np.uint8), 1)
+        cv2.imshow(f"capture {self.cam}", frame)
+
+        # def capture(self):
+        #    img_path = self.cam.capture(gp.GP_CAPTURE_IMAGE)
+        #    print("Camera file path: {0}/{1}".format(img_path.folder, img_path.name))
+        #    img_file = self.cam.file_get(
+        #        img_path.folder, img_path.name, gp.GP_FILE_TYPE_NORMAL
+        #    )
+        #    # image = cv2.imread(img_path)
+        #    image = cv2.imread(img_file)
+        #    self.show(image)
+        #    return image
 
     def capture(self):
         img_path = self.cam.capture(gp.GP_CAPTURE_IMAGE)
-        print("Camera file path: {0}/{1}".format(img_path.folder, img_path.name))
         img_file = self.cam.file_get(
             img_path.folder, img_path.name, gp.GP_FILE_TYPE_NORMAL
         )
-        # image = cv2.imread(img_path)
-        image = cv2.imread(img_file)
-        self.show(image)
-        return image
+        filedata = img_file.get_data_and_size()
+        data = memoryview(filedata)
+        frame_data = io.BytesIO(filedata)
+        image = cv2.imdecode(np.frombuffer(frame_data.read(), np.uint8), 1)
+        cv2.imshow('Capture', image)
+        cv2.waitKey(0)
 
-    def stream_capture(self):
-        while True:
-            img_path = self.cam.capture(gp.GP_CAPTURE_IMAGE)
-            img_file = self.cam.file_get(
-                img_path.folder, img_path.name, gp.GP_FILE_TYPE_NORMAL
-            )
-            filedata = img_file.get_data_and_size()
-            data = memoryview(filedata)
-            print(type(data), len(data))
-            print(data[:10].tolist())
-            stream = io.BytesIO(filedata)
-            frame = cv2.imdecode(np.frombuffer(stream.read(), np.uint8), 1)
-            self.show(frame)
+
+    def pippi(self):
+        key = 0
+        while key != ord("q"):
+            stream = self.stream()
+            self.show_stream(stream)
+            key = cv2.waitKey(1) & 0xFF
+            if key == ord("c"):
+                self.capture()
+        cv2.destroyAllWindows()
 
 
 def main():
     cam = Camera(camera, config)
-    cam.stream()
+    cam.pippi()
 
 
 if __name__ == "__main__":
